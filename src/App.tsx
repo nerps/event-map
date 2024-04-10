@@ -1,7 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { min, max, fromUnixTime, lightFormat, getUnixTime } from "date-fns";
 import "./App.css";
-import Map, { ViewState } from "react-map-gl/maplibre";
+import {
+  Map,
+  useControl,
+  ViewState,
+  NavigationControl,
+} from "react-map-gl/maplibre";
+import { MapboxOverlay, MapboxOverlayProps } from "@deck.gl/mapbox";
+import { LayersList } from "@deck.gl/core";
+import { ArcLayer } from "@deck.gl/layers";
 import Slider from "@mui/material/Slider";
 import { Monthline } from "./Calendar";
 import { Mapmarkers } from "./Mapmarkers";
@@ -10,8 +18,15 @@ import { Btl, NapoleonicWarsJSON } from "./types";
 const INITIAL_VIEW_STATE: Partial<ViewState> = {
   latitude: 44.13,
   longitude: 7.92,
-  zoom: 8,
+  zoom: 4,
 };
+function DeckGLOverlay(props: MapboxOverlayProps) {
+  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
+}
+
+//// turns milliseconds into days
 function getDurationDays(milli: number) {
   const minutes = Math.floor(milli / 60000);
   const hours = Math.round(minutes / 60);
@@ -32,6 +47,28 @@ function App() {
       label: string;
     }[]
   >([]);
+
+  const [arcsData, setArcsData] = useState<
+    { source: number[]; target: number[] }[]
+  >([]);
+  const myLayers: LayersList = useMemo(() => {
+    return [
+      new ArcLayer({
+        id: "arcs",
+        data: arcsData,
+        // dataTransform: (d: any) => {
+        //   console.log(d);
+        //   return d.features.filter((f: any) => f.properties.scalerank < 4);
+        // },
+        // Styles
+        getSourcePosition: (f) => f.source,
+        getTargetPosition: (f) => f.target,
+        getSourceColor: [0, 128, 200],
+        getTargetColor: [200, 0, 80],
+        getWidth: 1,
+      }),
+    ];
+  }, [arcsData, unixDateCurr]);
 
   const dateCurr = useMemo(() => fromUnixTime(unixDateCurr), [unixDateCurr]);
 
@@ -70,6 +107,7 @@ function App() {
                   b["Month2,N,10,0"],
                   b["Day2,N,10,0"]
                 );
+
           return {
             battle: b["Battle,C,254"],
             position: [b["Longitude,N,24,15"], b["Latitude,N,24,15"]],
@@ -85,6 +123,17 @@ function App() {
         });
 
         // prepare arc tracking of artifacts
+        // const arcs = [{source:[2.349014, 48.864716], target:[]}];
+        const arcsCoords = [[2.349014, 48.864716]]; // start with Paris
+        b.forEach((b) => {
+          if (b.artifacts === "Napoleon Bonaparte") {
+            arcsCoords.push(b.position);
+          }
+        });
+        const arcs = arcsCoords.slice(1).map((target, i) => {
+          return { source: arcsCoords[i], target };
+        });
+        setArcsData(arcs);
 
         setEventMarks(
           b.map((v) => {
@@ -115,8 +164,10 @@ function App() {
       <Map
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-        // mapStyle="https://api.maptiler.com/maps/streets/style.json?key=get_your_own_key"
       >
+        <DeckGLOverlay layers={myLayers} /* interleaved */ />
+        <NavigationControl position="bottom-right" />
+
         <Mapmarkers battleDots={events} dateCurr={dateCurr} />
       </Map>
     </>

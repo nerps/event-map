@@ -38,18 +38,15 @@
 }
 div {
 }
-.maplibregl-marker {
+/* .maplibregl-marker {
   color: red;
-}
-.duration:hover {
-  filter: drop-shadow(0 0 1em #00ff6a);
-}
-/* .duration.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
 } */
 div.line {
   display: grid;
   align-items: center;
+}
+div.maplibregl-marker:hover {
+  filter: drop-shadow(0 0 1px #a67dba);
 }
 span.eventText {
   display: block;

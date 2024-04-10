@@ -9,7 +9,9 @@ export function Mapmarkers({
   battleDots: Btl[];
   dateCurr: Date;
 }) {
-  return battleDots.map((b) => <EventMarker b={b} dateCurr={dateCurr} />);
+  return battleDots.map((b) => (
+    <EventMarker b={b} dateCurr={dateCurr} key={b.battle} />
+  ));
 }
 
 function EventMarker({ b, dateCurr }: { b: Btl; dateCurr: Date }) {
@@ -50,7 +52,7 @@ function EventMarker({ b, dateCurr }: { b: Btl; dateCurr: Date }) {
   }
 
   return (
-    <Marker longitude={b.position[0]} latitude={b.position[1]} key={b.battle}>
+    <Marker longitude={b.position[0]} latitude={b.position[1]}>
       <div
         className="line"
         style={{

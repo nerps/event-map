@@ -9,6 +9,7 @@ import {
   NavigationControl,
   ViewState,
   useControl,
+  AttributionControl,
 } from "react-map-gl/maplibre";
 import "./App.css";
 import { Calendar } from "./Calendar";
@@ -80,6 +81,7 @@ function App() {
   const handleTimeSlider = (_event: Event, newValue: number | number[]) => {
     const newDate = newValue as number;
     setUnixDate(newDate);
+    setPrevDate(newDate);
   };
 
   useEffect(() => {
@@ -171,14 +173,17 @@ function App() {
           max={maxDate}
           onChange={handleTimeSlider}
           marks={eventMarks}
+          track={false}
         />
       </div>
       <Map
         initialViewState={INITIAL_VIEW_STATE}
+        attributionControl={false}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
       >
         <DeckGLOverlay layers={layers} /* interleaved */ />
-        <NavigationControl position="bottom-right" />
+        <AttributionControl position="top-right" compact={false} />
+        {/* <NavigationControl position="top-right" /> */}
 
         <Mapmarkers battleDots={events} dateCurr={fromUnixTime(unixDate)} />
       </Map>

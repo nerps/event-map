@@ -63,10 +63,25 @@ span.eventText {
   z-index: 1;
   position: fixed;
   top: auto;
-  bottom: 1em;
+  bottom: 0em;
   left: 1em;
   right: 1em;
 }
+div.control > span.MuiSlider-root {
+  padding: 0;
+  height: 0;
+}
+div.control > span.MuiSlider-root > span.MuiSlider-mark {
+  height: 4px;
+  width: 1px;
+}
+div.control > span.MuiSlider-root > span.MuiSlider-thumb {
+  height: 20px;
+  width: 2px;
+  color: red;
+  border-radius: 0%;
+}
+
 /* .calendar {
   display: grid;
   grid-template-columns: "10px 2px 100px";

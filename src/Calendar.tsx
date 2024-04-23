@@ -185,10 +185,7 @@ function Timerail({ date: dateFromAbove, ticks }: TimerailProps): JSX.Element {
     setUnixDate(-unixTime); // update global time, so every rail can show it
     setDate(fromUnixTime(-unixTime)); // update time for children
   }
-  function onChangeCommitted(/* _e: Event, unixTime: number | number[] */) {
-    // if (typeof unixTime !== "number") return;
-    // setUnixDate(-unixTime); // update global time, so every rail can show it
-    // setDate(fromUnixTime(-unixTime)); // update time for children
+  function onChangeCommitted() {
     setPrevDate(unixDate); // root to update everyone's date
   }
 

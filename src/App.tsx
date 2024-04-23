@@ -1,19 +1,21 @@
-import { useState, useEffect, useMemo } from "react";
-import { min, max, fromUnixTime, lightFormat, getUnixTime } from "date-fns";
-import "./App.css";
-import {
-  Map,
-  useControl,
-  ViewState,
-  NavigationControl,
-} from "react-map-gl/maplibre";
-import { MapboxOverlay, MapboxOverlayProps } from "@deck.gl/mapbox";
 import { LayersList } from "@deck.gl/core";
 import { ArcLayer } from "@deck.gl/layers";
+import { MapboxOverlay, MapboxOverlayProps } from "@deck.gl/mapbox";
 import Slider from "@mui/material/Slider";
-import { Monthline } from "./Calendar";
+import { fromUnixTime, getUnixTime, lightFormat, max, min } from "date-fns";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Map,
+  NavigationControl,
+  ViewState,
+  useControl,
+} from "react-map-gl/maplibre";
+import "./App.css";
+import { Calendar } from "./Calendar";
 import { Mapmarkers } from "./Mapmarkers";
 import { Btl, NapoleonicWarsJSON } from "./types";
+import { useAtom, useSetAtom } from "jotai";
+import { prevDateAtom, unixDateAtom } from "./atoms";
 
 const INITIAL_VIEW_STATE: Partial<ViewState> = {
   latitude: 44.13,
@@ -40,7 +42,9 @@ function App() {
 
   const [minDate, setMinDate] = useState(0);
   const [maxDate, setMaxDate] = useState(0);
-  const [unixDateCurr, setUnixDateCurr] = useState(1); // current slider date as a Unix Timestamp
+  const [unixDate, setUnixDate] = useAtom(unixDateAtom);
+  const setPrevDate = useSetAtom(prevDateAtom);
+
   const [eventMarks, setEventMarks] = useState<
     {
       value: number;
@@ -51,7 +55,7 @@ function App() {
   const [arcsData, setArcsData] = useState<
     { source: number[]; target: number[] }[]
   >([]);
-  const myLayers: LayersList = useMemo(() => {
+  const layers: LayersList = useMemo(() => {
     return [
       new ArcLayer({
         id: "arcs",
@@ -68,13 +72,14 @@ function App() {
         getWidth: 1,
       }),
     ];
-  }, [arcsData, unixDateCurr]);
+  }, [arcsData, unixDate]);
 
-  const dateCurr = useMemo(() => fromUnixTime(unixDateCurr), [unixDateCurr]);
+  //const dateCurr = useMemo(() => fromUnixTime(unixDate), [unixDate]);
 
+  // console.log("[App.tsx]", dateCurr, unixDateCurr);
   const handleTimeSlider = (_event: Event, newValue: number | number[]) => {
     const newDate = newValue as number;
-    setUnixDateCurr(newDate);
+    setUnixDate(newDate);
   };
 
   useEffect(() => {
@@ -84,7 +89,14 @@ function App() {
     setMinDate(getUnixTime(d1));
     const d2 = max(events.map((b) => b.date2));
     setMaxDate(getUnixTime(d2));
-    setUnixDateCurr(getUnixTime(d1));
+    setUnixDate(getUnixTime(d1));
+    // console.log(
+    //   "[App.tsx] setting prevDate to",
+    //   d1,
+    //   " it was:",
+    //   fromUnixTime(prevDateDEBUG)
+    // );
+    setPrevDate(getUnixTime(d1));
 
     // get years between d1 and d2, as getUnixTime
   }, [events]);
@@ -147,14 +159,14 @@ function App() {
 
   return (
     <>
-      <Monthline date={dateCurr} />
+      <Calendar start={fromUnixTime(minDate)} end={fromUnixTime(maxDate)} />
       <div className="info">
-        <h2>{lightFormat(dateCurr, "yyyy-MM-dd")}</h2>
+        <h2>{lightFormat(fromUnixTime(unixDate), "yyyy-MM-dd")}</h2>
       </div>
       <div className="control">
         <Slider
           aria-label="time"
-          value={unixDateCurr}
+          value={unixDate}
           min={minDate}
           max={maxDate}
           onChange={handleTimeSlider}
@@ -165,10 +177,10 @@ function App() {
         initialViewState={INITIAL_VIEW_STATE}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
       >
-        <DeckGLOverlay layers={myLayers} /* interleaved */ />
+        <DeckGLOverlay layers={layers} /* interleaved */ />
         <NavigationControl position="bottom-right" />
 
-        <Mapmarkers battleDots={events} dateCurr={dateCurr} />
+        <Mapmarkers battleDots={events} dateCurr={fromUnixTime(unixDate)} />
       </Map>
     </>
   );

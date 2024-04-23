@@ -67,7 +67,7 @@ span.eventText {
   left: 1em;
   right: 1em;
 }
-.calendar {
+/* .calendar {
   display: grid;
   grid-template-columns: "10px 2px 100px";
   align-items: center;
@@ -78,6 +78,18 @@ span.eventText {
   top: 1em;
   left: 1em;
   margin: 0;
+} */
+div.calendar {
+  display: flex;
+  position: fixed;
+  top:1em;
+  left: 1em;
+  margin: 0;
+  /* border: 1px solid rgba(0,0,0,0.02); */
+  border-radius: 0.4cap;
+  box-shadow: 0px 0px 6px 1px rgba(0,0,0,0.3);
+  z-index: 1;
+  padding: 1em .5em;
 }
 div.calendarDot {
   align-self: baseline;

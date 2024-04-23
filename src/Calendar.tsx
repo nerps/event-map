@@ -2,18 +2,18 @@ import { Mark } from "@mui/base";
 import { SxProps, Theme } from "@mui/material";
 import Box from "@mui/material/Box";
 import Slider from "@mui/material/Slider";
-import { scaleTime } from "d3-scale";
+import { ScaleTime, scaleTime } from "d3-scale";
 import {
   differenceInCalendarMonths,
   eachYearOfInterval,
+  format,
   fromUnixTime,
   getUnixTime,
-  getYear,
   isAfter,
   isWithinInterval,
 } from "date-fns";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { prevDateAtom, unixDateAtom } from "./atoms";
 import { clamp } from "./misc";
 
@@ -29,7 +29,9 @@ type CalendarProps = {
 };
 type TimerailProps = {
   date: Date;
-  ticks: Date[]; // ticks precomputed by preceeding Timerail
+  timescale: ScaleTime<number, number, never>;
+  // level: number;
+  // ticks: Date[]; // ticks precomputed by preceeding Timerail
   // ppState: [
   //   // report coords to preceeding Timerail
   //   PolygonProjection,
@@ -73,12 +75,15 @@ export function Calendar(props: CalendarProps): JSX.Element {
 
   // const ppState = useState<PolygonProjection>({ ...polygonProjectionDefault });
 
-  const firstRailTicks = scaleTime([props.start, props.end], [0, height])
-    .nice()
-    .ticks();
+  // const firstRailTicks = scaleTime([props.start, props.end], [0, height])
+  //   .nice()
+  //   .ticks();
+  const scale = scaleTime([props.start, props.end], [0, height]).nice();
+  // console.log("[Calendar.tsx]", scale);
+  // const scale = computeZoomedScale(height, [props.start, props.end], date)
   return (
     <div className="calendar">
-      <Timerail ticks={firstRailTicks} date={date} />
+      <Timerail timescale={scale} date={date} />
     </div>
   );
 }
@@ -152,8 +157,19 @@ function Zoom({
   }, [ref1, unixDate]);
   return <div style={style}></div>;
 }
-// compute ticks for the following Timerail
-function computeZoomedTicks(height: number, ticks: Date[], date: Date): Date[] {
+
+/**
+ * compute ticks for the following Timerail
+ * @param height height in pixels for the Timerail (not used ATM)
+ * @param ticks current timerail ticks
+ * @param date current time
+ * @returns new ticks for the this Timerails child
+ */
+function computeZoomedScale(
+  height: number,
+  ticks: Date[],
+  date: Date
+): ScaleTime<number, number, never> {
   // let's have a variable zoom in factor in the future, now just zoom in to 3 intervals (4 ticks)
 
   const idxTickAfter = ticks.findIndex((v) => isAfter(v, date)); // the tick immediately after date
@@ -162,13 +178,26 @@ function computeZoomedTicks(height: number, ticks: Date[], date: Date): Date[] {
   // const i = 3 * Math.ceil(idxTickAfter / 3.0); // always move in batches of 3 intervals
   const i = clamp(idx + 1, 3, ticks.length - 1);
   const interval = [ticks[i - 3], ticks[i]];
-  return scaleTime(interval, [0, height]).nice().ticks();
+  // const scale = scaleTime(interval, [0, height]).nice();
+  // console.log("[Calendar.tsx]:computeZoomedScale", scale.ticks());
+  return scaleTime(interval, [0, height]).nice();
 }
 
-function Timerail({ date: dateFromAbove, ticks }: TimerailProps): JSX.Element {
+function Timerail({
+  date: dateFromAbove,
+  timescale,
+}: TimerailProps): JSX.Element {
   const [unixDate, setUnixDate] = useAtom(unixDateAtom);
   const [, setPrevDate] = useAtom(prevDateAtom);
   const ref = useRef<null | HTMLDivElement>(null);
+  const ticks = useMemo(() => {
+    if (timescale === undefined) {
+      console.log("[Calendar.tsx] undef");
+      return [];
+    }
+    return timescale.ticks();
+  }, [timescale]);
+  // const ticks = timescale === undefined ? [] : timescale.ticks();
 
   // use this for computing ticks for your child Timerail, hand it down to your child
   const [date, setDate] = useState<Date>(dateFromAbove);
@@ -189,20 +218,36 @@ function Timerail({ date: dateFromAbove, ticks }: TimerailProps): JSX.Element {
     setPrevDate(unixDate); // root to update everyone's date
   }
 
-  const [zoomedTicks, setZoomedTicks] = useState<Date[]>(
-    computeZoomedTicks(height, ticks, date)
+  const zoomedScale = useMemo(
+    () => computeZoomedScale(height, ticks, date),
+    [date, ticks]
   );
-  useEffect(() => {
-    setZoomedTicks(computeZoomedTicks(height, ticks, date));
-  }, [date, ticks]);
-  // take 3 ticks (double interval), make it the thing we zoom open, with "some" padding
 
-  // console.log("[Calendar.tsx]", "ticks", ticks);
-  const marks: Mark[] = ticks.map((y) => {
+  const formatted = ticks.map((d) => {
     return {
-      value: -getUnixTime(y),
-      label: getYear(y),
-      // format(temp, "MMM");
+      date: d,
+      year: format(d, "yyyy"),
+      month: format(d, "MMM"),
+    };
+  });
+  if (ticks !== undefined && ticks[0] !== undefined) {
+    const sameYear = formatted.every((f) => f.year === formatted[0].year);
+    const sameMonth = formatted.every((f) => f.month === formatted[0].month);
+    formatted.forEach((f) => {
+      if (sameYear) f.year = "";
+      if (sameMonth) f.month = "";
+    });
+  }
+  // console.log("[Calendar.tsx]", "ticks", ticks);
+  const marks: Mark[] = formatted.map((v) => {
+    return {
+      value: -getUnixTime(v.date),
+      label: (
+        <div className="timerailLabel">
+          <div className="year">{v.year}</div>
+          <div className="month">{v.month}</div>
+        </div>
+      ),
     };
   });
 
@@ -219,6 +264,14 @@ function Timerail({ date: dateFromAbove, ticks }: TimerailProps): JSX.Element {
   const diff = differenceInCalendarMonths(ticks[ticks.length - 1], ticks[0]);
   const isAboveOneYear = diff > 28;
 
+  // console.log(
+  //   "[Calendar.tsx] level",
+  //   level,
+  //   "numTicks",
+  //   ticks.length,
+  //   "zoomedScale",
+  //   zoomedScale
+  // );
   if (ticks.length === 0) return <></>;
 
   return (
@@ -244,7 +297,7 @@ function Timerail({ date: dateFromAbove, ticks }: TimerailProps): JSX.Element {
           onKeyDown={preventHorizontalKeyboardNavigation}
         />
       </Box>
-      {isAboveOneYear && <Timerail ticks={zoomedTicks} date={date} />}
+      {isAboveOneYear && <Timerail timescale={zoomedScale} date={date} />}
     </>
   );
 }

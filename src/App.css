@@ -81,19 +81,6 @@ div.control > span.MuiSlider-root > span.MuiSlider-thumb {
   color: red;
   border-radius: 0%;
 }
-
-/* .calendar {
-  display: grid;
-  grid-template-columns: "10px 2px 100px";
-  align-items: center;
-  font-size: small;
-  z-index: 1;
-  position: fixed;
-  width: 10em;
-  top: 1em;
-  left: 1em;
-  margin: 0;
-} */
 div.calendar {
   display: flex;
   position: fixed;
@@ -127,6 +114,14 @@ div.calendarName {
   grid-column: 1/1;
   /* padding: 0em 0 1.0em 0; */
   margin: -1em 0 0 0;
+}
+div.timerailLabel {
+  font-size: small;
+  line-height: 1em;
+  font-style: italic;
+}
+div.timerailLabel > div.year {
+  font-weight: 600;
 }
 
 /* @keyframes logo-spin {

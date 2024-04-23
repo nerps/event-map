@@ -27,13 +27,13 @@ function EventMarker({ b, dateCurr }: { b: Btl; dateCurr: Date }) {
   let opacity = 1; // fade in/out with quadratic easing
   let durationCSS: React.CSSProperties = {};
   let indicatorCSS: React.CSSProperties = {};
-  if (daysToEvent > 1) {
+  if (daysToEvent > 0) {
     indicatorCSS = {
       gridColumn: 1,
       marginLeft: `${(1 - daysToEvent / numDaysLag) * 100}%`,
     };
     opacity = Math.pow(1 - daysToEvent / numDaysLag, 2);
-  } else if (daysSinceEvent > 1) {
+  } else if (daysSinceEvent > 0) {
     indicatorCSS = {
       gridColumn: 3,
       marginLeft: `${(daysSinceEvent / numDaysLag) * 100}%`,

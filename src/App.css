@@ -128,7 +128,15 @@ div.timerailLabel {
 div.timerailLabel > div.year {
   font-weight: 600;
 }
-
+/* show date for Timerail while moving */
+/* div.calendar span.MuiSlider-valueLabelOpen {
+  z-index: 2000;
+  right:auto;
+  left: 30px;
+}
+div.calendar span.MuiSlider-thumb > input {
+  z-index: -1000;
+} */
 /* @keyframes logo-spin {
   from {
     transform: rotate(0deg);

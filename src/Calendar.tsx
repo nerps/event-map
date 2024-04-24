@@ -33,6 +33,17 @@ const height = 550;
 const boxStyle: SxProps<Theme> = {
   height: height + "px",
 };
+const trapezoidCSS: React.CSSProperties = {
+  zIndex: -1,
+  position: "absolute",
+  height: height + "px",
+  width: "0",
+  top: 0,
+  left: "0px",
+  borderRight: "0",
+  marginLeft: "-1em", // the box is using 1em padding
+  marginTop: "1em",
+};
 
 export function Calendar(props: CalendarProps): JSX.Element {
   const [prevDate] = useAtom(prevDateAtom);
@@ -134,20 +145,10 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
   const diff = differenceInCalendarMonths(ticks[ticks.length - 1], ticks[0]);
   const isAboveOneYear = diff > 12;
 
-  const [style, setStyle] = useState<React.CSSProperties>({
-    position: "absolute",
-    height: height + "px",
-    width: "0",
-    top: 0,
-    left: "0px",
-    borderRight: "0",
-    backgroundColor: "rgb(166 198 255 / 31%)",
-    marginLeft: "-1em", // the box is using 1em padding
-    marginTop: "1em",
-  });
-  useEffect(() => {
+  const trapezoidStyles: React.CSSProperties[] = useMemo(() => {
+    const styles: React.CSSProperties[] = [];
     const rails = ref.current?.querySelectorAll(".MuiSlider-rail");
-    if (rails === undefined || rails.length < 2) return;
+    if (rails === undefined || rails.length < 2) return [];
 
     const r0 = rails[0];
     const r1 = rails[1];
@@ -160,9 +161,11 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
       const l = r0.getBoundingClientRect().left + railWidth;
 
       const zoomedTicks = zoomedScale.ticks();
-      setStyle({
-        ...style,
+      // the faint blueish trapezoid in the background
+      styles.push({
+        ...trapezoidCSS,
         ...{
+          backgroundColor: "rgb(166 198 255 / 31%)",
           left: l + "px",
           width: w + "px",
           clipPath: `polygon(
@@ -173,14 +176,66 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
               )`,
         },
       });
+      const d = fromUnixTime(unixDate); // current (global) date
+      // line through the middle of the trapezoid showing current date
+      styles.push({
+        ...trapezoidCSS,
+        ...{
+          backgroundColor: "black",
+          left: l + "px",
+          width: w + "px",
+          clipPath: `polygon(
+                0% ${scale(d)}px,
+                100% ${zoomedScale(d)}px,
+                100% ${zoomedScale(d) + 1}px,
+                0% ${scale(d) + 1}px
+              )`,
+        },
+      });
+      // line at the top of the trapezoid
+      styles.push({
+        ...trapezoidCSS,
+        ...{
+          backgroundColor: "grey",
+          left: l + "px",
+          width: w + "px",
+          clipPath: `polygon(
+                0% ${scale(zoomedTicks[0])}px,
+                100% ${0}px,
+                100% ${1}px,
+                0% ${scale(zoomedTicks[0]) + 1}px
+              )`,
+        },
+      });
+      // line at the bottom of the trapezoid
+      styles.push({
+        ...trapezoidCSS,
+        ...{
+          backgroundColor: "grey",
+          left: l + "px",
+          width: w + "px",
+          clipPath: `polygon(
+                0% ${scale(zoomedTicks[zoomedTicks.length - 1])}px,
+                100% ${height}px,
+                100% ${height + 1}px,
+                0% ${scale(zoomedTicks[zoomedTicks.length - 1]) + 1}px
+              )`,
+        },
+      });
     }
+    return styles;
   }, [ref, zoomedScale, scale]);
-  const polygon = <div style={style} />;
+
+  // a faint trapezoid in the background with black lines to indicate
+  // zoom from this Timerail to the next
+  const trapezoid = trapezoidStyles.map((s) => {
+    return <div style={s} />;
+  });
 
   if (ticks.length === 0) return <></>;
   return (
     <div style={{ display: "flex" }} ref={ref}>
-      {isAboveOneYear && polygon}
+      {isAboveOneYear && trapezoid}
       <Box sx={boxStyle}>
         <Slider
           sx={{
@@ -196,7 +251,10 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
           value={-unixDate}
           marks={marks}
           aria-label="Timerail"
-          valueLabelDisplay="off"
+          valueLabelDisplay="auto"
+          valueLabelFormat={(v: number) => {
+            return <div>{format(fromUnixTime(v), "yyyy-MM-dd")}</div>;
+          }}
           onChange={onChange}
           onChangeCommitted={onChangeCommitted}
           onKeyDown={preventHorizontalKeyboardNavigation}

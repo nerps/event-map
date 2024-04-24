@@ -72,13 +72,17 @@ div.control > span.MuiSlider-root {
   height: 0;
 }
 div.control > span.MuiSlider-root > span.MuiSlider-mark {
-  height: 4px;
+  height: 5px;
   width: 1px;
+  border-radius: 0%;
+  opacity: 0.9;
+  top: 4px;
 }
 div.control > span.MuiSlider-root > span.MuiSlider-thumb {
   height: 20px;
   width: 2px;
   color: red;
+  opacity: 0.6;
   border-radius: 0%;
 }
 div.calendar {

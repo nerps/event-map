@@ -6,7 +6,6 @@ import { fromUnixTime, getUnixTime, lightFormat, max, min } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import {
   Map,
-  NavigationControl,
   ViewState,
   useControl,
   AttributionControl,
@@ -14,7 +13,7 @@ import {
 import "./App.css";
 import { Calendar } from "./Calendar";
 import { Mapmarkers } from "./Mapmarkers";
-import { Btl, NapoleonicWarsJSON } from "./types";
+import { ArcDatum, Btl, NapoleonicWarsJSON, ArcPartial } from "./types";
 import { useAtom, useSetAtom } from "jotai";
 import { prevDateAtom, unixDateAtom } from "./atoms";
 
@@ -53,24 +52,52 @@ function App() {
     }[]
   >([]);
 
-  const [arcsData, setArcsData] = useState<
-    { source: number[]; target: number[] }[]
-  >([]);
+  const [arcsData, setArcsData] = useState<ArcDatum[]>([]);
+  const colArcPast: [number, number, number, number] = [245, 127, 23, 100];
+  const colArcFuture: [number, number, number, number] = [245, 127, 23, 50];
   const layers: LayersList = useMemo(() => {
     return [
       new ArcLayer({
         id: "arcs",
         data: arcsData,
-        // dataTransform: (d: any) => {
-        //   console.log(d);
-        //   return d.features.filter((f: any) => f.properties.scalerank < 4);
-        // },
-        // Styles
-        getSourcePosition: (f) => f.source,
-        getTargetPosition: (f) => f.target,
-        getSourceColor: [0, 128, 200],
-        getTargetColor: [200, 0, 80],
-        getWidth: 1,
+        getSourcePosition: (f: ArcDatum) => f.source.position,
+        getTargetPosition: (f: ArcDatum) => f.target.position,
+        getSourceColor: (item: ArcDatum): [number, number, number, number] => {
+          const t = fromUnixTime(unixDate);
+          if (item.target.dateArrival < t) return colArcPast;
+          if (item.source.dateDeparture > t) return colArcFuture;
+
+          const atEndZero = getUnixTime(item.target.dateArrival) - unixDate;
+          const normaliseBy =
+            getUnixTime(item.target.dateArrival) -
+            getUnixTime(item.source.dateDeparture);
+          // return brown with 100% opacity when time close to start, more transparent when t closer to arrival date end of arc
+          return [161, 136, 127, (255 * atEndZero) / normaliseBy];
+        },
+        getTargetColor: (item: ArcDatum) => {
+          const t = fromUnixTime(unixDate);
+          if (item.target.dateArrival < t) return colArcPast;
+          if (item.source.dateDeparture > t) return colArcFuture;
+
+          const atStartZero = unixDate - getUnixTime(item.source.dateDeparture);
+          const normaliseBy =
+            getUnixTime(item.target.dateArrival) -
+            getUnixTime(item.source.dateDeparture);
+          // return green with high transparency when time close to start, 100% opacity when time close to end of arc
+          return [51, 105, 30, (255 * atStartZero) / normaliseBy];
+        },
+        getWidth: (item: ArcDatum) => {
+          const t = fromUnixTime(unixDate);
+          if (item.source.dateDeparture < t && item.target.dateArrival > t)
+            return 5;
+          return 2;
+        },
+        updateTriggers: {
+          // deck.gl does not reevaluate accessors per default
+          getWidth: [unixDate],
+          getSourceColor: [unixDate],
+          getTargetColor: [unixDate],
+        },
       }),
     ];
   }, [arcsData, unixDate]);
@@ -138,12 +165,18 @@ function App() {
 
         // prepare arc tracking of artifacts
         // const arcs = [{source:[2.349014, 48.864716], target:[]}];
-        const arcsCoords = [[2.349014, 48.864716]]; // start with Paris
+        // const arcsCoords = [[2.349014, 48.864716]]; // start with Paris
+        const arcsCoords: ArcPartial[] = [];
         b.forEach((b) => {
           if (b.artifacts === "Napoleon Bonaparte") {
-            arcsCoords.push(b.position);
+            arcsCoords.push({
+              position: b.position,
+              dateArrival: b.date1,
+              dateDeparture: b.date2,
+            });
           }
         });
+        // pair the coordinates up, so for 10 coords we have 9 pairs==9 arcs
         const arcs = arcsCoords.slice(1).map((target, i) => {
           return { source: arcsCoords[i], target };
         });

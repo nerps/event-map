@@ -25,3 +25,5 @@ export type Btl = {
   duration: number; // duration in days
   artifacts: string; // comma separated list of trackable artifacts (here it's people)
 };
+export type ArcPartial = {position: [number, number]; dateArrival: Date; dateDeparture: Date};
+export type ArcDatum = { source: ArcPartial; target: ArcPartial };

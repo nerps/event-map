@@ -15,4 +15,4 @@ This runs this prototype locally, then use chrome to visit [http://localhost:517
 
 ## TODO
 
-Please excuse the arcs all over the map, those are Napoleons movements (some are missing because the dataset is incomplete). I plan to animate them over time.
+The arcs all over the map are Napoleons movements (some are missing because the dataset is incomplete). They are animated over time with color/transparency/line-width changes. I want to add a menu to allow tracking of other people from the data set.

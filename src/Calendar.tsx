@@ -228,8 +228,8 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
 
   // a faint trapezoid in the background with black lines to indicate
   // zoom from this Timerail to the next
-  const trapezoid = trapezoidStyles.map((s) => {
-    return <div style={s} />;
+  const trapezoid = trapezoidStyles.map((s, index) => {
+    return <div style={s} key={index} />;
   });
 
   if (ticks.length === 0) return <></>;

@@ -9,6 +9,7 @@ Napoleonic Wars dataset from [borealisdata](https://borealisdata.ca/dataset.xhtm
 ## setup
 
 > bun install
+>
 > bun dev
 
 This runs this prototype locally, then use chrome to visit [http://localhost:5173](http://localhost:5173/)

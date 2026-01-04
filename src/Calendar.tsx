@@ -240,7 +240,8 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
         <Slider
           sx={{
             '& input[type="range"]': {
-              WebkitAppearance: "slider-vertical",
+              writingMode: "vertical-lr",
+              direction: "rtl",
             },
           }}
           min={marks[marks.length - 1].value}

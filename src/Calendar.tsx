@@ -15,12 +15,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { prevDateAtom, unixDateAtom } from "./atoms";
 import { clamp } from "./misc";
 
-function preventHorizontalKeyboardNavigation(event: React.KeyboardEvent) {
-  if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-    event.preventDefault();
-  }
-}
-
 type CalendarProps = {
   start: Date;
   end: Date;
@@ -264,7 +258,7 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
           // }}
           onChange={onChange}
           onChangeCommitted={onChangeCommitted}
-          onKeyDown={preventHorizontalKeyboardNavigation}
+          // onKeyDown={preventHorizontalKeyboardNavigation}
         />
       </Box>
       {isAboveOneYear && <Timerail scale={zoomedScale} date={date} />}

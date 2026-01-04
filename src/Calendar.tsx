@@ -100,6 +100,12 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
     setDate(dateFromAbove);
   }, [dateFromAbove]);
 
+  /**
+   * Sliders call this constantly on interaction to update time
+   * @param _e
+   * @param unixTime
+   * @returns
+   */
   function onChange(_e: Event, unixTime: number | number[]) {
     if (typeof unixTime !== "number") return;
     setUnixDate(-unixTime); // update global time, so every rail can show it
@@ -252,10 +258,10 @@ function Timerail({ date: dateFromAbove, scale }: TimerailProps): JSX.Element {
           value={-unixDate}
           marks={marks}
           aria-label="Timerail"
-          valueLabelDisplay="auto"
-          valueLabelFormat={(v: number) => {
-            return <div>{format(fromUnixTime(v), "yyyy-MM-dd")}</div>;
-          }}
+          // valueLabelDisplay="auto"
+          // valueLabelFormat={(v: number) => {
+          //   return <div>{format(fromUnixTime(v), "yyyy-MM-dd")}</div>;
+          // }}
           onChange={onChange}
           onChangeCommitted={onChangeCommitted}
           onKeyDown={preventHorizontalKeyboardNavigation}

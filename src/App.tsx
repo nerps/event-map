@@ -214,7 +214,7 @@ function App() {
         attributionControl={false}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
       >
-        <DeckGLOverlay layers={layers} /* interleaved */ />
+        <DeckGLOverlay layers={layers} interleaved />
         <AttributionControl position="top-right" compact={false} />
         {/* <NavigationControl position="top-right" /> */}
 
